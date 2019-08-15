@@ -21,7 +21,7 @@ var edgesBodies = new Map()
 
 var visitedNodes = new Map()
 
-
+var selectedNode = undefined;
 
 class GraphView extends React.Component{
 
@@ -59,7 +59,7 @@ class GraphView extends React.Component{
     
     setUpBodies() {
         //Create Ground and surrounding
-        var ground = Bodies.rectangle(400, 400, 810, 20, { isStatic: true });
+        var ground = Bodies.rectangle(400, this.props.height-50, 2500, 40, { isStatic: true });
         World.add(this.state.engine.world, ground);
 
         //Here should be the reading of graph from file or data
@@ -82,9 +82,13 @@ class GraphView extends React.Component{
         this.addEdge('B', 'G')
         this.addEdge('B', 'H')
 
+        this.selectNode('F')
+
         this.addNodeToVisited('A')
-        setTimeout(() => this.addNodeToVisited('B'), 2000)
-        console.log(visitedNodes)
+        setTimeout(() => {
+            this.addNodeToVisited('B')
+            this.selectNode('D')
+        }, 2000)
     }
 
     addNode(id) {
@@ -145,6 +149,34 @@ class GraphView extends React.Component{
         //set specific color for visited nodes
         nodeBody.render.fillStyle = 'red'
         nodeBody.render.strokeStyle = 'red'
+    }
+
+    selectNode(nodeID) {
+        //Get node body and neighbours
+        const {nodeBody, ...other} = this.getNodeProps(nodeID)
+        //set selected variable to node and get the prev
+        const prevSelectedID = selectedNode
+        selectedNode = nodeID
+
+        //change color on newly selected node.
+        nodeBody.render.fillStyle = 'green'
+        nodeBody.render.strokeStyle = 'green'
+
+        //Change back color of prev selected node
+        const prevNodeBody = nodesBodies.get(prevSelectedID)
+        if(!prevNodeBody) return
+        prevNodeBody.render.fillStyle = 'blue'
+        prevNodeBody.render.strokeStyle = 'blue'
+    }
+
+    getNodeProps(nodeID) {
+        const nodeBody = nodesBodies.get(nodeID)
+        const nodeNeighbours = nodesNeighbours.get(nodeID)
+        if(!nodeBody || !nodeNeighbours) {
+            console.error("nodebody and/or nodeNeighbours not found for nodeID:", nodeID)
+            return {} 
+        }
+        return {nodeBody, nodeNeighbours}
     }
 
 

@@ -6,8 +6,8 @@ import GraphView from './components/GraphView/GraphView'
 
 function App() {
   return ( 
-    <div style={{padding: 100}}>
-      <GraphView height={400} width={600}/>
+    <div>
+      <GraphView height={800} width={1480}/>
     </div>
   );
 }
