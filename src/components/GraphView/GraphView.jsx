@@ -2,8 +2,6 @@ import React from 'react'
 
 import Matter from 'matter-js'
 
-import GraphEngine from './graphengine'
-
 var Engine = Matter.Engine,
     Render = Matter.Render,
     World = Matter.World,
@@ -11,6 +9,18 @@ var Engine = Matter.Engine,
     Constraint = Matter.Constraint,
     Mouse = Matter.Mouse,
     MouseConstraint = Matter.MouseConstraint;
+
+//nodesNeighbours: id -> [...nodeIDS]
+var nodesNeighbours = new Map()
+//nodesBodies: id -> matter body
+var nodesBodies = new Map()
+//edges: id -> [nodeIDA, nodeIDB]
+var edges = new Map()
+//edgesBodies: id -> constraint
+var edgesBodies = new Map()
+
+var visitedNodes = new Map()
+
 
 
 class GraphView extends React.Component{
@@ -50,38 +60,102 @@ class GraphView extends React.Component{
     setUpBodies() {
         //Create Ground and surrounding
         var ground = Bodies.rectangle(400, 400, 810, 20, { isStatic: true });
+        World.add(this.state.engine.world, ground);
 
-        // create shapes
-        var nodeA = Bodies.circle(350, 50, 20);
-        var nodeB = Bodies.circle(350, 50, 20);
-        var nodeC = Bodies.circle(350, 50, 20);
-        var nodeD = Bodies.circle(350, 50, 30);
-        var nodeE = Bodies.circle(350, 50, 30);
-        var nodeF = Bodies.circle(350, 50, 30);
-        
+        //Here should be the reading of graph from file or data
 
-        // add all of the Bodies to the world
-        World.add(this.state.engine.world, [nodeA, nodeB, nodeC, nodeD, nodeE, nodeF, ground]);
+        this.addNode('A')
+        this.addNode('B')
+        this.addNode('C')
+        this.addNode('D')
+        this.addNode('E')
+        this.addNode('F')
+        this.addNode('G')
+        this.addNode('H')
+    
+        this.addEdge('A', 'B')
+        this.addEdge('A', 'C')
+        this.addEdge('B', 'C')
+        this.addEdge('A', 'D')
+        this.addEdge('A', 'E')
+        this.addEdge('B', 'F')
+        this.addEdge('B', 'G')
+        this.addEdge('B', 'H')
 
-        var constrainOptions = {
+        this.addNodeToVisited('A')
+        setTimeout(() => this.addNodeToVisited('B'), 2000)
+        console.log(visitedNodes)
+    }
+
+    addNode(id) {
+        //add empty neighbours
+        let neighbours = []
+        nodesNeighbours.set(id, neighbours)
+
+        //Create node body
+        let color = 'blue'
+        let options = {
+            render: {
+                fillStyle: color,
+                strokeStyle: color,
+                lineWidth: 3
+           }
+        }
+        let node = Bodies.circle(350, 50, 20, options);
+        nodesBodies.set(id, node)
+
+        //Add to world engine
+        World.add(this.state.engine.world, node);
+    }
+
+    addEdge(nodeIDA, nodeIDB) {
+        let nodeBodyA = nodesBodies.get(nodeIDA)
+        let nodeBodyB = nodesBodies.get(nodeIDB)
+
+        //error case
+        if(!nodeBodyA || ! nodeBodyB) {
+            return console.error("couldn't find nodeID for either " + nodeIDA + " or " + nodeIDB)
+        };
+
+        //Add constraint and put in world
+        let constrainOptions = {
             length: 100,
             damping: 0.1,
             stiffness: 0.01
         }
-        this.createConstraint(nodeA, nodeB, constrainOptions)
-        this.createConstraint(nodeA, nodeC, constrainOptions)
-        this.createConstraint(nodeB, nodeC, constrainOptions)
-        this.createConstraint(nodeA, nodeD, constrainOptions)
-        this.createConstraint(nodeA, nodeE, constrainOptions)
-        this.createConstraint(nodeB, nodeF, constrainOptions)
+        //Put edge object in array for body and neighbours
+        let constraint = this.createConstraint(nodeBodyA, nodeBodyB, constrainOptions)
+        //TODO - add sorting for this
+        let edgeID = nodeIDA+nodeIDB;
+        edgesBodies.set(edgeID, constraint)
+        edges.set(edgeID, [nodeIDA, nodeIDB])
     }
 
+    addNodeToVisited(nodeID) {
+        let nodeBody = nodesBodies.get(nodeID)
+        let nodeNeighbours = nodesNeighbours.get(nodeID)
+
+        //error
+        if(!nodeBody || !nodeNeighbours) {
+            return console.error("nodebody and/or nodeNeighbours not found for nodeID:", nodeID)
+        }
+
+        //add to array
+        visitedNodes.set(nodeID, nodeNeighbours)
+        //set specific color for visited nodes
+        nodeBody.render.fillStyle = 'red'
+        nodeBody.render.strokeStyle = 'red'
+    }
+
+
     createConstraint(bodyA, bodyB, options) {
+        //TODO - looks so theres no already exisitng
         let optionsObj = {bodyA, bodyB, ...options}
         let constraint = Constraint.create(optionsObj)
         constraint.render.type = 'line';
         constraint.render.anchors = false;
         World.add(this.state.engine.world, constraint);
+        return constraint
     }
 
     runEngineAndRender() {
