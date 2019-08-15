@@ -10,6 +10,11 @@ var Engine = Matter.Engine,
     Mouse = Matter.Mouse,
     MouseConstraint = Matter.MouseConstraint;
 
+var defaultColor = 'blue',
+    selectColor = 'green',
+    visitedColor = 'red';
+
+
 //nodesNeighbours: id -> [...nodeIDS]
 var nodesNeighbours = new Map()
 //nodesBodies: id -> matter body
@@ -97,11 +102,10 @@ class GraphView extends React.Component{
         nodesNeighbours.set(id, neighbours)
 
         //Create node body
-        let color = 'blue'
         let options = {
             render: {
-                fillStyle: color,
-                strokeStyle: color,
+                fillStyle: defaultColor,
+                strokeStyle: defaultColor,
                 lineWidth: 3
            }
         }
@@ -136,8 +140,7 @@ class GraphView extends React.Component{
     }
 
     addNodeToVisited(nodeID) {
-        let nodeBody = nodesBodies.get(nodeID)
-        let nodeNeighbours = nodesNeighbours.get(nodeID)
+        const {nodeBody, nodeNeighbours} = this.getNodeProps(nodeID)
 
         //error
         if(!nodeBody || !nodeNeighbours) {
@@ -147,8 +150,7 @@ class GraphView extends React.Component{
         //add to array
         visitedNodes.set(nodeID, nodeNeighbours)
         //set specific color for visited nodes
-        nodeBody.render.fillStyle = 'red'
-        nodeBody.render.strokeStyle = 'red'
+        this.setColor(nodeBody, visitedColor)
     }
 
     selectNode(nodeID) {
@@ -159,14 +161,12 @@ class GraphView extends React.Component{
         selectedNode = nodeID
 
         //change color on newly selected node.
-        nodeBody.render.fillStyle = 'green'
-        nodeBody.render.strokeStyle = 'green'
+        this.setColor(nodeBody, selectColor)
 
         //Change back color of prev selected node
-        const prevNodeBody = nodesBodies.get(prevSelectedID)
+        const {prevNodeBody, nodeNeighbours} = this.getNodeProps(prevSelectedID)
         if(!prevNodeBody) return
-        prevNodeBody.render.fillStyle = 'blue'
-        prevNodeBody.render.strokeStyle = 'blue'
+        this.setColor(prevNodeBody, defaultColor)
     }
 
     getNodeProps(nodeID) {
@@ -179,6 +179,10 @@ class GraphView extends React.Component{
         return {nodeBody, nodeNeighbours}
     }
 
+    setColor(nodeBody, color) {
+        nodeBody.render.fillStyle = color
+        nodeBody.render.strokeStyle = color
+    }
 
     createConstraint(bodyA, bodyB, options) {
         //TODO - looks so theres no already exisitng
