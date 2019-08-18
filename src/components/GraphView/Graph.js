@@ -1,6 +1,7 @@
 import Matter from 'matter-js'
 import MatterAttractors from 'matter-attractors'
 import countries from '../../data/countries'
+import Algorithms from './Algorithms'
 
 function Graph(ref, width, height) {
     Matter.use(MatterAttractors);
@@ -140,6 +141,8 @@ function Graph(ref, width, height) {
         addNodeToVisited('FIN')
         setStart('NOR')
         setFinish('BLR')
+        setStaticNode('BLR')
+        setStaticNode('HRV')
     }
 
     function setUp() {
