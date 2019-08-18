@@ -1,11 +1,14 @@
 import Matter from 'matter-js'
+import MatterAttractors from 'matter-attractors'
 
 function Graph(ref, width, height) {
+    Matter.use(MatterAttractors);
 
     let Engine = Matter.Engine,
         Render = Matter.Render,
         World = Matter.World,
         Bodies = Matter.Bodies,
+        Body = Matter.Body,
         Constraint = Matter.Constraint,
         Mouse = Matter.Mouse,
         MouseConstraint = Matter.MouseConstraint;
@@ -28,8 +31,6 @@ function Graph(ref, width, height) {
     let render = setUpRender()
 
 
-
-
     function setUpEngine() {
         return Engine.create()
     }
@@ -46,10 +47,10 @@ function Graph(ref, width, height) {
         })
     }
 
-    function setUpBodies() {
+    function setUpTestBodies() {
         //Create Ground and surrounding
-        var ground = Bodies.rectangle(400, height-50, 2500, 40, { isStatic: true });
-        World.add(engine.world, ground);
+        //var ground = Bodies.rectangle(400, height-50, 2500, 40, { isStatic: true });
+        //World.add(engine.world, ground);
 
         //Here should be the reading of graph from file or data
 
@@ -57,10 +58,16 @@ function Graph(ref, width, height) {
         addNode('B')
         addNode('C')
         addNode('D')
+        addNode('E')
         addNode('F')
         addNode('G')
         addNode('H')
-        addNode('E')
+        addNode('I')
+        addNode('J')
+        addNode('K')
+        addNode('L')
+        addNode('M')
+        addNode('N')
 
         addEdge('A', 'B')
         addEdge('A', 'C')
@@ -71,6 +78,13 @@ function Graph(ref, width, height) {
         addEdge('B', 'G')
         addEdge('B', 'H')
 
+        addEdge('I', 'J')
+        addEdge('I', 'K')
+        addEdge('G', 'I')
+        addEdge('K', 'L')
+        addEdge('L', 'M')
+        addEdge('L', 'N')
+
         selectNode('F')
 
         addNodeToVisited('A')
@@ -80,8 +94,16 @@ function Graph(ref, width, height) {
         }, 2000)
     }
 
-    function SetUp() {
-        setUpBodies();
+    function setUp() {
+        /** 
+         *  gravity of -5.5 - stable fast, but very powerful beginning movements if starting at same pos
+         *  gravity of -3.5 might be a bit stiff, but still not to wiggly
+         *  gravity of -2.5 Feels a bit to wiggly. Wiggles a long time
+        */
+        engine.world.gravity.y = 0;
+        MatterAttractors.Attractors.gravityConstant = -5.5;
+
+        setUpTestBodies();
         addMouseConstrain();
         runEngineAndRender()
     }
@@ -92,14 +114,24 @@ function Graph(ref, width, height) {
         nodesNeighbours.set(id, neighbours)
 
         //Create node body
+        let pos = {
+            x: 450,
+            y: 250
+        }
+        let radius = 20
         let options = {
             render: {
                 fillStyle: defaultColor,
                 strokeStyle: defaultColor,
                 lineWidth: 3
+            },
+            plugin: {
+                attractors: [
+                    MatterAttractors.Attractors.gravity
+                ]
+            }
         }
-        }
-        let node = Bodies.circle(350, 50, 20, options);
+        let node = Bodies.circle(pos.x, pos.y, radius, options);
         nodesBodies.set(id, node)
 
         //Add to world engine
@@ -130,7 +162,7 @@ function Graph(ref, width, height) {
     }
 
     function addNodeToVisited(nodeID) {
-        const {nodeBody, nodeNeighbours} = getNodeProps(nodeID)
+        const {nodeBody, nodeNeighbours} = getNode(nodeID)
 
         //error
         if(!nodeBody || !nodeNeighbours) {
@@ -145,7 +177,7 @@ function Graph(ref, width, height) {
 
     function selectNode(nodeID) {
         //Get node body and neighbours
-        const {nodeBody, ...other} = getNodeProps(nodeID)
+        const {nodeBody, ...other} = getNode(nodeID)
         //set selected variable to node and get the prev
         const prevSelectedID = selectedNode
         selectedNode = nodeID
@@ -154,12 +186,20 @@ function Graph(ref, width, height) {
         setColor(nodeBody, selectColor)
 
         //Change back color of prev selected node
-        const {prevNodeBody, nodeNeighbours} = getNodeProps(prevSelectedID)
-        if(!prevNodeBody) return
-        setColor(prevNodeBody, defaultColor)
+        const prevNode = getNode(prevSelectedID)
+        if(!prevNode.nodeBody) return
+        setColor(prevNode.nodeBody, defaultColor)
     }
 
-    function getNodeProps(nodeID) {
+    function setStart(nodeId) {
+        //TODO - fix start
+    }
+
+    function setFinish(nodeId) {
+        //TODO - fix start
+    }
+
+    function getNode(nodeID) {
         const nodeBody = nodesBodies.get(nodeID)
         const nodeNeighbours = nodesNeighbours.get(nodeID)
         if(!nodeBody || !nodeNeighbours) {
@@ -204,4 +244,23 @@ function Graph(ref, width, height) {
             });
         World.add(engine.world, mouseConstraint);
     }
+
+    function setStaticNode(nodeId) {
+        const {nodeBody, nodeNeighbours} = getNode(nodeId)
+        if (!nodeBody) return 
+        nodeBody.isStatic = true;
+        //Body.setStatic(nodeBody, true);
+    }
+
+    return {
+        setUp,
+        setUpTestBodies,
+        addNode,
+        addEdge,
+        selectNode,
+        addNodeToVisited,
+        setStaticNode,
+    }
 }
+
+export default Graph;
