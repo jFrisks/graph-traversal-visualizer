@@ -18,6 +18,9 @@ function Graph(ref, width, height) {
         selectColor = 'green',
         visitedColor = 'red';
 
+    let defaultRadius = 10,
+        defaultEdgeLength = 50;
+
     //nodesNeighbours: id -> [...nodeIDS]
     let nodesNeighbours = new Map()
     //nodesBodies: id -> matter body
@@ -128,16 +131,19 @@ function Graph(ref, width, height) {
             addNode(nodeIDA)
             addMultipleEdges(nodeIDA, multipleNodeID)
         })
+        selectNode('FRA')
+        addNodeToVisited('SWE')
+        addNodeToVisited('AUT')
     }
 
     function setUp() {
         /** 
-         *  gravity of -5.5 - stable fast, but very powerful beginning movements if starting at same pos
+         *  gravity of -5.5 - stable fast, but very powerful beginning movements if starting at same pos. Removed powerful with random startpos
          *  gravity of -3.5 might be a bit stiff, but still not to wiggly
          *  gravity of -2.5 Feels a bit to wiggly. Wiggles a long time
         */
         engine.world.gravity.y = 0;
-        MatterAttractors.Attractors.gravityConstant = -4.5;
+        MatterAttractors.Attractors.gravityConstant = -7.5;
 
         setUpBorders();
         setUpTestBodies2();
@@ -145,7 +151,7 @@ function Graph(ref, width, height) {
         runEngineAndRender()
     }
 
-    function addNode(id) {
+    function addNode(id, radius = defaultRadius) {
         //error handling
         if(nodesBodies.get(id)) return console.error('tried to add new node for already existing nodeID: ', id)
 
@@ -158,7 +164,6 @@ function Graph(ref, width, height) {
             x: Math.random() * width,
             y: Math.random() * height
         }
-        let radius = 20
         let options = {
             render: {
                 fillStyle: defaultColor,
@@ -178,7 +183,7 @@ function Graph(ref, width, height) {
         World.add(engine.world, node);
     }
 
-    function addEdge(nodeIDA, nodeIDB) {
+    function addEdge(nodeIDA, nodeIDB, length = defaultEdgeLength) {
         //TODO - handle
 
         var nodeBodyA = nodesBodies.get(nodeIDA)
@@ -198,7 +203,7 @@ function Graph(ref, width, height) {
         }
         //Add constraint and put in world
         let constrainOptions = {
-            length: 100,
+            length: length,
             damping: 0.1,
             stiffness: 0.01
         }
@@ -210,7 +215,7 @@ function Graph(ref, width, height) {
         edges.set(edgeID, [nodeIDA, nodeIDB])
     }
 
-    function addMultipleEdges(nodeIDA, multipleNodeID) {
+    function addMultipleEdges(nodeIDA, multipleNodeID, length = 100) {
         multipleNodeID.forEach(nodeIDB => {
             addEdge(nodeIDA, nodeIDB)
         })
@@ -233,6 +238,7 @@ function Graph(ref, width, height) {
     function selectNode(nodeID) {
         //Get node body and neighbours
         const {nodeBody, ...other} = getNode(nodeID)
+        if(!nodeBody) return console.error("Couldn't set Color - No nodeID found")
         //set selected variable to node and get the prev
         const prevSelectedID = selectedNode
         selectedNode = nodeID
