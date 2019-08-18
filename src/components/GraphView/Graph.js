@@ -16,6 +16,8 @@ function Graph(ref, width, height) {
 
     let defaultColor = 'blue',
         selectColor = 'green',
+        startColor = 'white',
+        finishColor = 'yellow',
         visitedColor = 'red';
 
     let defaultRadius = 10,
@@ -31,6 +33,8 @@ function Graph(ref, width, height) {
     let edgesBodies = new Map()
     let visitedNodes = new Map()
     let selectedNode = undefined;
+    let startNode = undefined;
+    let finishNode = undefined;
     let engine = setUpEngine()
     let render = setUpRender()
 
@@ -131,9 +135,11 @@ function Graph(ref, width, height) {
             addNode(nodeIDA)
             addMultipleEdges(nodeIDA, multipleNodeID)
         })
-        selectNode('FRA')
+        selectNode('AUT')
         addNodeToVisited('SWE')
-        addNodeToVisited('AUT')
+        addNodeToVisited('FIN')
+        setStart('NOR')
+        setFinish('BLR')
     }
 
     function setUp() {
@@ -236,28 +242,32 @@ function Graph(ref, width, height) {
     }
 
     function selectNode(nodeID) {
+        changeColor(nodeID, selectedNode, selectColor)
+    }
+
+    function setStart(nodeID) {
+        changeColor(nodeID, startNode, startColor)
+    }
+
+    function setFinish(nodeID) {
+        changeColor(nodeID, finishNode, finishColor)
+    }
+
+    function changeColor(nodeID, valToModify, color) {
         //Get node body and neighbours
         const {nodeBody, ...other} = getNode(nodeID)
         if(!nodeBody) return console.error("Couldn't set Color - No nodeID found")
         //set selected variable to node and get the prev
-        const prevSelectedID = selectedNode
-        selectedNode = nodeID
+        const prevSelectedID = valToModify
+        valToModify = nodeID
 
         //change color on newly selected node.
-        setColor(nodeBody, selectColor)
+        setColor(nodeBody, color)
 
         //Change back color of prev selected node
         const prevNode = getNode(prevSelectedID)
         if(!prevNode.nodeBody) return
         setColor(prevNode.nodeBody, defaultColor)
-    }
-
-    function setStart(nodeId) {
-        //TODO - fix start
-    }
-
-    function setFinish(nodeId) {
-        //TODO - fix start
     }
 
     function getNode(nodeID) {
@@ -320,6 +330,8 @@ function Graph(ref, width, height) {
         addEdge,
         addMultipleEdges,
         selectNode,
+        setStart,
+        setFinish,
         addNodeToVisited,
         setStaticNode,
     }
