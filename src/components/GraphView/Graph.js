@@ -1,5 +1,6 @@
 import Matter from 'matter-js'
 import MatterAttractors from 'matter-attractors'
+import countries from '../../data/countries'
 
 function Graph(ref, width, height) {
     Matter.use(MatterAttractors);
@@ -47,6 +48,26 @@ function Graph(ref, width, height) {
         })
     }
 
+    function setUpBorders() {
+        //Create node body
+        let shapeWidth = 500
+        let options = {
+            render: {
+                fillStyle: defaultColor,
+                strokeStyle: defaultColor,
+                lineWidth: 3
+            },
+            isStatic: true
+        }
+        const wallLeft = Bodies.rectangle(-shapeWidth/2, height/2, shapeWidth, height, options);
+        const wallTop = Bodies.rectangle(width/2, -shapeWidth/2, width, shapeWidth, options);
+        const wallRight = Bodies.rectangle(width+shapeWidth/2, height/2, shapeWidth, height, options);
+        const wallBottom = Bodies.rectangle(width/2, height+shapeWidth/2, width, shapeWidth, options);
+        const walls = [wallLeft, wallTop, wallRight, wallBottom]
+        //Add to world engine
+        World.add(engine.world, walls);
+    }
+
     function setUpTestBodies() {
         //Create Ground and surrounding
         //var ground = Bodies.rectangle(400, height-50, 2500, 40, { isStatic: true });
@@ -77,7 +98,7 @@ function Graph(ref, width, height) {
         addEdge('B', 'F')
         addEdge('B', 'G')
         addEdge('B', 'H')
-
+        
         addEdge('I', 'J')
         addEdge('I', 'K')
         addEdge('G', 'I')
@@ -94,6 +115,21 @@ function Graph(ref, width, height) {
         }, 2000)
     }
 
+    function setUpTestBodies2() {
+        setUpCountries();
+    }
+
+    async function setUpCountries() {
+        //set upp more bodies
+        const euCountries = await countries().getEUCountries()
+        euCountries.forEach(country => {
+            const nodeIDA = country.alpha3Code
+            const multipleNodeID = country.borders
+            addNode(nodeIDA)
+            addMultipleEdges(nodeIDA, multipleNodeID)
+        })
+    }
+
     function setUp() {
         /** 
          *  gravity of -5.5 - stable fast, but very powerful beginning movements if starting at same pos
@@ -101,22 +137,26 @@ function Graph(ref, width, height) {
          *  gravity of -2.5 Feels a bit to wiggly. Wiggles a long time
         */
         engine.world.gravity.y = 0;
-        MatterAttractors.Attractors.gravityConstant = -5.5;
+        MatterAttractors.Attractors.gravityConstant = -4.5;
 
-        setUpTestBodies();
+        setUpBorders();
+        setUpTestBodies2();
         addMouseConstrain();
         runEngineAndRender()
     }
 
     function addNode(id) {
+        //error handling
+        if(nodesBodies.get(id)) return console.error('tried to add new node for already existing nodeID: ', id)
+
         //add empty neighbours
         let neighbours = []
         nodesNeighbours.set(id, neighbours)
 
         //Create node body
         let pos = {
-            x: 450,
-            y: 250
+            x: Math.random() * width,
+            y: Math.random() * height
         }
         let radius = 20
         let options = {
@@ -139,14 +179,23 @@ function Graph(ref, width, height) {
     }
 
     function addEdge(nodeIDA, nodeIDB) {
-        let nodeBodyA = nodesBodies.get(nodeIDA)
-        let nodeBodyB = nodesBodies.get(nodeIDB)
+        //TODO - handle
+
+        var nodeBodyA = nodesBodies.get(nodeIDA)
+        var nodeBodyB = nodesBodies.get(nodeIDB)
 
         //error case
-        if(!nodeBodyA || ! nodeBodyB) {
-            return console.error("couldn't find nodeID for either " + nodeIDA + " or " + nodeIDB)
-        };
-
+        if(!nodeBodyA || !nodeBodyB) {
+            if(!nodeBodyA) {
+                addNode(nodeIDA)
+                nodeBodyA = nodesBodies.get(nodeIDA)
+            }
+            if(!nodeBodyB) {
+                addNode(nodeIDB)
+                nodeBodyB = nodesBodies.get(nodeIDB)
+            }
+            console.error("Created new node - couldn't find nodeID ", nodeIDA)
+        }
         //Add constraint and put in world
         let constrainOptions = {
             length: 100,
@@ -159,6 +208,12 @@ function Graph(ref, width, height) {
         let edgeID = nodeIDA+nodeIDB;
         edgesBodies.set(edgeID, constraint)
         edges.set(edgeID, [nodeIDA, nodeIDB])
+    }
+
+    function addMultipleEdges(nodeIDA, multipleNodeID) {
+        multipleNodeID.forEach(nodeIDB => {
+            addEdge(nodeIDA, nodeIDB)
+        })
     }
 
     function addNodeToVisited(nodeID) {
@@ -257,6 +312,7 @@ function Graph(ref, width, height) {
         setUpTestBodies,
         addNode,
         addEdge,
+        addMultipleEdges,
         selectNode,
         addNodeToVisited,
         setStaticNode,

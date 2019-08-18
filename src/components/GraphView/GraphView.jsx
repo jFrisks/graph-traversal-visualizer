@@ -3,6 +3,8 @@ import React from 'react'
 import Matter from 'matter-js'
 import Graph from './Graph'
 
+import countries from '../../data/countries'
+
 class GraphView extends React.Component{
 
     constructor(props) {
@@ -15,21 +17,15 @@ class GraphView extends React.Component{
 
     componentDidMount() {
         //set upp render - after that set up everything else
-        let newGraph = Graph(this.scene, this.props.width, this.props.height)
+        const newGraph = Graph(this.scene, this.props.width, this.props.height)
         this.setState({
             Graph: newGraph
         }, () => {
             this.state.Graph.setUp()
-            this.setUpBodies()
         })
         
     }
     
-    setUpBodies() {
-        //set upp more bodies
-        this.state.Graph.setStaticNode('K')
-    }
-
     render() {
         return (
             <div ref={this.scene} />

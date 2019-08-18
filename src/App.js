@@ -7,7 +7,7 @@ import GraphView from './components/GraphView/GraphView'
 function App() {
   return ( 
     <div>
-      <GraphView height={800} width={1480}/>
+      <GraphView height={window.innerHeight} width={window.innerWidth}/>
     </div>
   );
 }
