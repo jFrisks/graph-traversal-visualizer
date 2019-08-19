@@ -12,7 +12,7 @@ class Queue
     dequeue() {
         if(this.isEmpty())
             return "Trying to dequeue empty queue"
-        this.items.shift()
+        return this.items.shift()
     }
     peek() {
         if(this.isEmpty())

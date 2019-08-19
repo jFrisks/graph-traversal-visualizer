@@ -1,7 +1,7 @@
 import Matter from 'matter-js'
 import MatterAttractors from 'matter-attractors'
 import countries from '../../data/countries'
-import Algorithms from './Algorithms'
+import Algorithms from '../Algorithms'
 
 function Graph(ref, width, height) {
     Matter.use(MatterAttractors);
@@ -124,6 +124,10 @@ function Graph(ref, width, height) {
     }
 
     async function setUpCountries() {
+        let visited = new Map()
+        let startNodeID = undefined
+        let finishNodeID = undefined
+        let selectedNodeID = undefined
         //set upp more bodies
         const euCountries = await countries().getEUCountries()
         euCountries.forEach(country => {
@@ -132,11 +136,11 @@ function Graph(ref, width, height) {
             addNode(nodeIDA)
             addMultipleEdges(nodeIDA, multipleNodeID)
         })
-        selectNode('AUT')
-        setVisited('SWE')
-        setVisited('FIN')
-        setStart('NOR')
-        setFinish('BLR')
+        // selectNode('AUT', selectedNodeID)
+        // setVisited('SWE', visited)
+        // setVisited('FIN', visited)
+        // setStart('NOR', startNodeID)
+        // setFinish('BLR', finishNodeID)
         setStaticNode('BLR')
         setStaticNode('HRV')
     }
@@ -218,6 +222,15 @@ function Graph(ref, width, height) {
         let edgeID = nodeIDA+nodeIDB;
         edgesBodies.set(edgeID, constraint)
         edges.set(edgeID, [nodeIDA, nodeIDB])
+
+        //setting neighbours for nodes
+        const neighboursA = nodesNeighbours.get(nodeIDA)
+        neighboursA.push(nodeIDB)
+        nodesNeighbours.set(nodeIDA, neighboursA)
+
+        const neighboursB = nodesNeighbours.get(nodeIDB)
+        neighboursB.push(nodeIDA)
+        nodesNeighbours.set(nodeIDB, neighboursB)
     }
 
     function addMultipleEdges(nodeIDA, multipleNodeID, length = 100) {
@@ -226,7 +239,7 @@ function Graph(ref, width, height) {
         })
     }
 
-    function setVisited(nodeID, visitedArr) {
+    function setVisited(nodeID, visited) {
         const {nodeBody, nodeNeighbours} = getNode(nodeID)
 
         //error
@@ -234,8 +247,8 @@ function Graph(ref, width, height) {
             return console.error("nodebody and/or nodeNeighbours not found for nodeID:", nodeID)
         }
 
-        //add to array
-        visitedArr.push(nodeID)
+        //add to visited
+        visited.set(nodeID, true)
         //set specific color for visited nodes
         setColor(nodeBody, visitedColor)
     }
@@ -258,7 +271,7 @@ function Graph(ref, width, height) {
         if(!nodeBody) return console.error("Couldn't set Color - No nodeID found")
         //set selected variable to node and get the prev
         const prevSelectedID = valToModify
-        valToModify = nodeID
+        valToModify = nodeID;
 
         //change color on newly selected node.
         setColor(nodeBody, color)
@@ -326,6 +339,7 @@ function Graph(ref, width, height) {
         setUp,
         setUpTestBodies,
         addNode,
+        getNode,
         addEdge,
         addMultipleEdges,
         selectNode,
