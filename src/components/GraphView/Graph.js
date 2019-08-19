@@ -32,10 +32,6 @@ function Graph(ref, width, height) {
     let edges = new Map()
     //edgesBodies: id -> constraint
     let edgesBodies = new Map()
-    let visitedNodes = new Map()
-    let selectedNode = undefined;
-    let startNode = undefined;
-    let finishNode = undefined;
     let engine = setUpEngine()
     let render = setUpRender()
 
@@ -116,9 +112,9 @@ function Graph(ref, width, height) {
 
         selectNode('F')
 
-        addNodeToVisited('A')
+        setVisited('A')
         setTimeout(() => {
-            addNodeToVisited('B')
+            setVisited('B')
             selectNode('D')
         }, 2000)
     }
@@ -137,8 +133,8 @@ function Graph(ref, width, height) {
             addMultipleEdges(nodeIDA, multipleNodeID)
         })
         selectNode('AUT')
-        addNodeToVisited('SWE')
-        addNodeToVisited('FIN')
+        setVisited('SWE')
+        setVisited('FIN')
         setStart('NOR')
         setFinish('BLR')
         setStaticNode('BLR')
@@ -230,7 +226,7 @@ function Graph(ref, width, height) {
         })
     }
 
-    function addNodeToVisited(nodeID) {
+    function setVisited(nodeID, visitedArr) {
         const {nodeBody, nodeNeighbours} = getNode(nodeID)
 
         //error
@@ -239,20 +235,20 @@ function Graph(ref, width, height) {
         }
 
         //add to array
-        visitedNodes.set(nodeID, nodeNeighbours)
+        visitedArr.push(nodeID)
         //set specific color for visited nodes
         setColor(nodeBody, visitedColor)
     }
 
-    function selectNode(nodeID) {
+    function selectNode(nodeID, selectedNode) {
         changeColor(nodeID, selectedNode, selectColor)
     }
 
-    function setStart(nodeID) {
+    function setStart(nodeID, startNode) {
         changeColor(nodeID, startNode, startColor)
     }
 
-    function setFinish(nodeID) {
+    function setFinish(nodeID, finishNode) {
         changeColor(nodeID, finishNode, finishColor)
     }
 
@@ -335,7 +331,7 @@ function Graph(ref, width, height) {
         selectNode,
         setStart,
         setFinish,
-        addNodeToVisited,
+        setVisited,
         setStaticNode,
     }
 }
