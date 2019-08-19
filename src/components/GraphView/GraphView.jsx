@@ -45,7 +45,8 @@ class GraphView extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
-            Graph: undefined
+            Graph: undefined,
+            algoRunning: false
         }
         this.scene = React.createRef();
     }
@@ -61,10 +62,19 @@ class GraphView extends React.Component{
         
     }
 
-    handleBFSClick() {
-        Algorithms(this.state.Graph).bfs('SWE', 'BLR')
+    async handleBFSClick() {
+        const algo = () => Algorithms(this.state.Graph).bfs('SWE', 'BLR')
+        this.runAlgo(algo)
     }
 
+    async runAlgo(algo) {
+        if(this.state.algoRunning)
+            return console.log("algo already running")
+
+        this.setState({algoRunning: true})
+        await algo()
+        this.setState({algoRunning: false})
+    }
 
     
     render() {

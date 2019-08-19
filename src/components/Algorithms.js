@@ -28,7 +28,6 @@ function Algorithms(Graph) {
             Graph.selectNode(currentNodeID, selectedNodeID)
             selectedNodeID = currentNodeID;
             const {nodeBody, nodeNeighbours} = Graph.getNode(currentNodeID)
-            console.log(nodeNeighbours)
 
             //Iterate through all neigbours and potentially add to queue
             for(let neighbourID of nodeNeighbours){
@@ -40,6 +39,7 @@ function Algorithms(Graph) {
             await timer(timerWait)
         }
 
+        return console.log('BFS done')
     }
 
     function dfs() {
