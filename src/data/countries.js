@@ -15,7 +15,7 @@ function countries() {
     }
 
     const getWorldCountries = async () => {
-        return await fetchAPI("https://restcountries.eu/rest/v2/all?fields=name;alpha2Code;borders;")
+        return await fetchAPI("https://restcountries.eu/rest/v2/all?fields=name;alpha3Code;borders;")
     }
 
     return {
