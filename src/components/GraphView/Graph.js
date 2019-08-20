@@ -27,10 +27,6 @@ function Graph(ref, width, height) {
         defaultEdgeLength = 50;
 
     let nodes = new Map()
-    //nodesNeighbours: id -> [...nodeIDS]
-    let nodesNeighbours = new Map()
-    //nodesBodies: id -> matter body
-    let nodesBodies = new Map()
     //edges: id -> [nodeIDA, nodeIDB]
     let edges = new Map()
     //edgesBodies: id -> constraint
@@ -121,7 +117,7 @@ function Graph(ref, width, height) {
         constructor(nodeBody, neighbours){
             this.nodeBody = nodeBody;
             this.neighbours = neighbours;
-            this.prevColor = undefined;
+            this.prevColor = defaultColor;
             this.currentColor = defaultColor;
         }
 
@@ -140,6 +136,11 @@ function Graph(ref, width, height) {
             let currentColor = this.currentColor;
             this.currentColor = this.prevColor
             this.prevColor = currentColor;
+        }
+
+        resetColors(){
+            this.currentColor = defaultColor;
+            this.setCurrentColor(defaultColor)
         }
 
         addNeighbour(nodeID) {
@@ -228,6 +229,12 @@ function Graph(ref, width, height) {
         multipleNodeID.forEach(nodeIDB => {
             addEdge(nodeIDA, nodeIDB, length)
         })
+    }
+
+    function reset() {
+        for(let node of nodes.values()){
+            node.resetColors()
+        }
     }
 
     function setVisited(nodeID, visited) {
@@ -331,6 +338,7 @@ function Graph(ref, width, height) {
 
     return {
         setUp,
+        reset,
         addNode,
         getNode,
         addEdge,

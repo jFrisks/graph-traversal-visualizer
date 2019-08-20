@@ -1,13 +1,12 @@
 import Graph from './GraphView/Graph'
 import { Queue, Stack } from './Datastructures'
 
-function Algorithms(Graph) {
+function Algorithms(Graph, timerWait) {
     //All algo stuff in here, so we can have the graph to only manipulate the visual, and then reset in end
     // let visitedNodes = new Map()
     // let selectedNode = undefined;
     // let startNode = undefined;
     // let finishNode = undefined;
-    let timerWait = 500;
 
     async function bfs(startNodeID, endNodeID = undefined) {
     //set up

@@ -39,6 +39,12 @@ const Button = styled.button`
 	text-shadow:0px 1px 0px #2f6627;
 `
 
+const RedButton = styled(Button)`
+    background-color:#EA3C3C;
+    text-shadow:0px 1px 0px rgba(35,35,35,0.72);
+    border:1px solid rgba(35,35,35,0.72);
+`
+
 function Selector(props) {
     const { data, value, onChange, ...other } = props;
 
@@ -52,6 +58,7 @@ function Selector(props) {
 }
 
 let data = ['SWE', 'BLR', 'TUR', 'DEU']
+let speedSteps = [50, 100, 500, 1000, 2000]
 
 class GraphView extends React.Component{
     
@@ -62,10 +69,11 @@ class GraphView extends React.Component{
             Graph: undefined,
             algoRunning: false,
             startNode: data[0],
-            endNode: data[1]
+            endNode: data[1],
+            speed: speedSteps[3]
         }
         this.scene = React.createRef();
-        this.handleNodeChange = this.handleNodeChange.bind(this);
+        this.handleSelectChange = this.handleSelectChange.bind(this);
     }
 
     componentDidMount() {
@@ -79,23 +87,32 @@ class GraphView extends React.Component{
         
     }
 
-    handleNodeChange(event, stateVar) {
+    handleSelectChange(event, stateVar) {
         this.setState({[stateVar]: event.target.value})
     }
 
     handleBFTClick() {
-        const algo = () => Algorithms(this.state.Graph).bfs(this.state.startNode)
+        const algo = () => Algorithms(this.state.Graph, this.state.speed).bfs(this.state.startNode)
         this.runAlgo(algo)
     }
 
     handleBFSClick() {
-        const algo = () => Algorithms(this.state.Graph).bfs(this.state.startNode, this.state.endNode)
+        const algo = () => Algorithms(this.state.Graph, this.state.speed).bfs(this.state.startNode, this.state.endNode)
         this.runAlgo(algo)
     }
 
     handleDFSClick() {
-        const algo = () => Algorithms(this.state.Graph).dfs(this.state.startNode)
+        const algo = () => Algorithms(this.state.Graph, this.state.speed).dfs(this.state.startNode)
         this.runAlgo(algo)
+    }
+
+    handleReset() {
+        const resetFunc = () => new Promise(res => {
+            console.log("resetting colors")
+            this.state.Graph.reset()
+            res()
+        })
+        this.runAlgo(resetFunc)
     }
 
     async runAlgo(algo) {
@@ -122,8 +139,12 @@ class GraphView extends React.Component{
                         <Button onClick={() => this.handleDFSClick()}>
                             START DFT
                         </Button>
-                        <Selector key={1} data={data} value={this.state.startNode} onChange={(e) => this.handleNodeChange(e, 'startNode')}/>
-                        <Selector key={2} data={data} value={this.state.endNode} onChange={(e) => this.handleNodeChange(e, 'endNode')}/>
+                        <RedButton onClick={() => this.handleReset()}>
+                            Reset
+                        </RedButton>
+                        <Selector data={data} value={this.state.startNode} onChange={(e) => this.handleSelectChange(e, 'startNode')}/>
+                        <Selector data={data} value={this.state.endNode} onChange={(e) => this.handleSelectChange(e, 'endNode')}/>
+                        <Selector data={speedSteps} value={this.state.speed} onChange={(e) => this.handleSelectChange(e, 'speed')}/>
                     </Menu>
                 </div>
             </Wrapper>
