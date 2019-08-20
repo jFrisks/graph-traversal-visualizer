@@ -1,9 +1,14 @@
 # Features
 - Floating visualization of graph containing nodes and edges
-- Drag and drop edges
+- Drag and drop nodes and edges
+- Graph algorithm vizualisation (BFS, BFS Shortest Path, DFS)
+- Add your own Graph data
 
 # Future Features
-- Graph traversal vizualisation
+- Directed and Weighted Graphs
+- Network Flow
+- 
+
 
 # Technology
-Built on React, Based on Matter.js, Powered by Javascript
+Built with Javascript for React, Based on Matter.js
