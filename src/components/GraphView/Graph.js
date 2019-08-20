@@ -159,7 +159,9 @@ function Graph(ref, width, height) {
 
     function addNode(id, radius = defaultRadius) {
         //error handling
-        if(nodes.get(id)) return console.log('tried to add new node for already existing nodeID: ', id)
+        if(nodes.get(id))
+            return
+            //return console.log('tried to add new node for already existing nodeID: ', id)
 
         //Create node body
         let pos = {
@@ -198,12 +200,10 @@ function Graph(ref, width, height) {
             if(!nodeA) {
                 addNode(nodeIDA)
                 nodeA = nodes.get(nodeIDA)
-                console.error("Created new node - couldn't find nodeID ", nodeIDA)
             }
             if(!nodeB) {
                 addNode(nodeIDB)
                 nodeB = nodes.get(nodeIDB)
-                console.error("Created new node - couldn't find nodeID ", nodeIDB)
             }
         }
         //Add constraint and put in world
