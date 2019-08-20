@@ -62,8 +62,18 @@ class GraphView extends React.Component{
         
     }
 
-    async handleBFSClick() {
-        const algo = () => Algorithms(this.state.Graph).bfs('SWE', 'BLR')
+    handleBFTClick() {
+        const algo = () => Algorithms(this.state.Graph).bfs('SWE')
+        this.runAlgo(algo)
+    }
+
+    handleBFSClick() {
+        const algo = () => Algorithms(this.state.Graph).bfs('SWE', 'TUR')
+        this.runAlgo(algo)
+    }
+
+    handleDFSClick() {
+        const algo = () => Algorithms(this.state.Graph).dfs('SWE')
         this.runAlgo(algo)
     }
 
@@ -82,8 +92,14 @@ class GraphView extends React.Component{
             <Wrapper>
                 <div className="graphView" ref={this.scene}>
                     <Menu>
+                        <Button onClick={() => this.handleBFTClick()}>
+                            START BFT
+                        </Button>
                         <Button onClick={() => this.handleBFSClick()}>
                             START BFS
+                        </Button>
+                        <Button onClick={() => this.handleDFSClick()}>
+                            START DFT
                         </Button>
                     </Menu>
                 </div>

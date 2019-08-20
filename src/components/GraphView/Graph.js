@@ -16,14 +16,17 @@ function Graph(ref, width, height) {
         MouseConstraint = Matter.MouseConstraint;
 
     let defaultColor = 'blue',
-        selectColor = 'green',
+        selectColor = 'orange',
         startColor = 'white',
         finishColor = 'yellow',
-        visitedColor = 'red';
+        visitedColor = 'red',
+        inQueueColor = 'white',
+        pathColor = 'green';
 
     let defaultRadius = 10,
         defaultEdgeLength = 50;
 
+    let nodes = new Map()
     //nodesNeighbours: id -> [...nodeIDS]
     let nodesNeighbours = new Map()
     //nodesBodies: id -> matter body
@@ -32,6 +35,7 @@ function Graph(ref, width, height) {
     let edges = new Map()
     //edgesBodies: id -> constraint
     let edgesBodies = new Map()
+
     let engine = setUpEngine()
     let render = setUpRender()
 
@@ -70,53 +74,6 @@ function Graph(ref, width, height) {
         const walls = [wallLeft, wallTop, wallRight, wallBottom]
         //Add to world engine
         World.add(engine.world, walls);
-    }
-
-    function setUpTestBodies() {
-        //Create Ground and surrounding
-        //var ground = Bodies.rectangle(400, height-50, 2500, 40, { isStatic: true });
-        //World.add(engine.world, ground);
-
-        //Here should be the reading of graph from file or data
-
-        addNode('A')
-        addNode('B')
-        addNode('C')
-        addNode('D')
-        addNode('E')
-        addNode('F')
-        addNode('G')
-        addNode('H')
-        addNode('I')
-        addNode('J')
-        addNode('K')
-        addNode('L')
-        addNode('M')
-        addNode('N')
-
-        addEdge('A', 'B')
-        addEdge('A', 'C')
-        addEdge('B', 'C')
-        addEdge('A', 'D')
-        addEdge('A', 'E')
-        addEdge('B', 'F')
-        addEdge('B', 'G')
-        addEdge('B', 'H')
-        
-        addEdge('I', 'J')
-        addEdge('I', 'K')
-        addEdge('G', 'I')
-        addEdge('K', 'L')
-        addEdge('L', 'M')
-        addEdge('L', 'N')
-
-        selectNode('F')
-
-        setVisited('A')
-        setTimeout(() => {
-            setVisited('B')
-            selectNode('D')
-        }, 2000)
     }
 
     function setUpTestBodies2() {
@@ -160,13 +117,49 @@ function Graph(ref, width, height) {
         runEngineAndRender()
     }
 
+    class Node {
+        constructor(nodeBody, neighbours){
+            this.nodeBody = nodeBody;
+            this.neighbours = neighbours;
+            this.prevColor = undefined;
+            this.currentColor = defaultColor;
+        }
+
+        setCurrentColor(color) {
+            this.nodeBody.render.fillStyle = color
+            this.nodeBody.render.strokeStyle = color
+
+            this.prevColor = this.currentColor
+            this.currentColor = color
+        }
+
+        setToOldColor(){
+            this.nodeBody.render.fillStyle = this.prevColor
+            this.nodeBody.render.strokeStyle = this.prevColor
+
+            let currentColor = this.currentColor;
+            this.currentColor = this.prevColor
+            this.prevColor = currentColor;
+        }
+
+        addNeighbour(nodeID) {
+            this.neighbours.push(nodeID)
+        }
+
+        getNeighbours() {
+            return this.neighbours;
+        }
+
+        getBody() {
+            return this.nodeBody;
+        }
+
+        //addEdge
+    }
+
     function addNode(id, radius = defaultRadius) {
         //error handling
-        if(nodesBodies.get(id)) return console.error('tried to add new node for already existing nodeID: ', id)
-
-        //add empty neighbours
-        let neighbours = []
-        nodesNeighbours.set(id, neighbours)
+        if(nodes.get(id)) return console.log('tried to add new node for already existing nodeID: ', id)
 
         //Create node body
         let pos = {
@@ -185,30 +178,33 @@ function Graph(ref, width, height) {
                 ]
             }
         }
-        let node = Bodies.circle(pos.x, pos.y, radius, options);
-        nodesBodies.set(id, node)
-
+        //creating nodeBody
+        let nodeBody = Bodies.circle(pos.x, pos.y, radius, options);
         //Add to world engine
-        World.add(engine.world, node);
+        World.add(engine.world, nodeBody);
+        //add empty neighbours
+        let neighbours = []
+
+        let node = new Node(nodeBody, neighbours)
+        nodes.set(id, node)
     }
 
     function addEdge(nodeIDA, nodeIDB, length = defaultEdgeLength) {
-        //TODO - handle
-
-        var nodeBodyA = nodesBodies.get(nodeIDA)
-        var nodeBodyB = nodesBodies.get(nodeIDB)
+        let nodeA = nodes.get(nodeIDA)
+        let nodeB = nodes.get(nodeIDB)
 
         //error case
-        if(!nodeBodyA || !nodeBodyB) {
-            if(!nodeBodyA) {
+        if(!nodeA || !nodeB) {
+            if(!nodeA) {
                 addNode(nodeIDA)
-                nodeBodyA = nodesBodies.get(nodeIDA)
+                nodeA = nodes.get(nodeIDA)
+                console.error("Created new node - couldn't find nodeID ", nodeIDA)
             }
-            if(!nodeBodyB) {
+            if(!nodeB) {
                 addNode(nodeIDB)
-                nodeBodyB = nodesBodies.get(nodeIDB)
+                nodeB = nodes.get(nodeIDB)
+                console.error("Created new node - couldn't find nodeID ", nodeIDB)
             }
-            console.error("Created new node - couldn't find nodeID ", nodeIDA)
         }
         //Add constraint and put in world
         let constrainOptions = {
@@ -217,42 +213,28 @@ function Graph(ref, width, height) {
             stiffness: 0.01
         }
         //Put edge object in array for body and neighbours
-        let constraint = createConstraint(nodeBodyA, nodeBodyB, constrainOptions)
+        let constraint = createConstraint(nodeA.getBody(), nodeB.getBody(), constrainOptions)
         //TODO - add sorting for this
         let edgeID = nodeIDA+nodeIDB;
         edgesBodies.set(edgeID, constraint)
         edges.set(edgeID, [nodeIDA, nodeIDB])
 
         //setting neighbours for nodes
-        const neighboursA = nodesNeighbours.get(nodeIDA)
-        neighboursA.push(nodeIDB)
-        nodesNeighbours.set(nodeIDA, neighboursA)
-
-        const neighboursB = nodesNeighbours.get(nodeIDB)
-        neighboursB.push(nodeIDA)
-        nodesNeighbours.set(nodeIDB, neighboursB)
+        nodeA.addNeighbour(nodeIDB)
+        nodeB.addNeighbour(nodeIDA)
     }
 
     function addMultipleEdges(nodeIDA, multipleNodeID, length = 100) {
         multipleNodeID.forEach(nodeIDB => {
-            addEdge(nodeIDA, nodeIDB)
+            addEdge(nodeIDA, nodeIDB, length)
         })
     }
 
     function setVisited(nodeID, visited) {
-        const {nodeBody, nodeNeighbours} = getNode(nodeID)
-
-        //error
-        if(!nodeBody || !nodeNeighbours) {
-            return console.error("nodebody and/or nodeNeighbours not found for nodeID:", nodeID)
-        }
-
-        //add to visited
         visited.set(nodeID, true)
-        //set specific color for visited nodes
-        setColor(nodeBody, visitedColor)
     }
 
+  
     function selectNode(nodeID, selectedNode) {
         changeColor(nodeID, selectedNode, selectColor)
     }
@@ -265,36 +247,41 @@ function Graph(ref, width, height) {
         changeColor(nodeID, finishNode, finishColor)
     }
 
+    function setPath(pathArr){
+        pathArr.forEach(nodeID => {
+            let node = nodes.get(nodeID)
+            node.setCurrentColor(pathColor)
+        })
+    }
+
     function changeColor(nodeID, valToModify, color) {
-        //Get node body and neighbours
-        const {nodeBody, ...other} = getNode(nodeID)
-        if(!nodeBody) return console.error("Couldn't set Color - No nodeID found")
+        const node = nodes.get(nodeID)
+        if(!node)
+            return console.error("Couldn't change Color - No nodeID found")
+
         //set selected variable to node and get the prev
-        const prevSelectedID = valToModify
+        const prevSelectedID = valToModify;
         valToModify = nodeID;
 
         //change color on newly selected node.
-        setColor(nodeBody, color)
+        node.setCurrentColor(color)
 
         //Change back color of prev selected node
-        const prevNode = getNode(prevSelectedID)
-        if(!prevNode.nodeBody) return
-        setColor(prevNode.nodeBody, defaultColor)
+        const prevNode = nodes.get(prevSelectedID)
+        if(!prevNode)
+            return console.error("Couldn't change Color - No nodeID found")
+        prevNode.setToOldColor()
     }
 
-    function getNode(nodeID) {
-        const nodeBody = nodesBodies.get(nodeID)
-        const nodeNeighbours = nodesNeighbours.get(nodeID)
-        if(!nodeBody || !nodeNeighbours) {
-            console.error("nodebody and/or nodeNeighbours not found for nodeID:", nodeID)
-            return {} 
-        }
-        return {nodeBody, nodeNeighbours}
+    function setInQueueColor(nodeID) {
+        const node = nodes.get(nodeID)
+        if(!node)
+            return console.error("Couldn't set in queue Color - No nodeID found")
+        node.setCurrentColor(inQueueColor)
     }
 
-    function setColor(nodeBody, color) {
-        nodeBody.render.fillStyle = color
-        nodeBody.render.strokeStyle = color
+    function setVisitedColor(node) {
+        node.setCurrentColor(visitedColor)
     }
 
     function createConstraint(bodyA, bodyB, options) {
@@ -305,6 +292,13 @@ function Graph(ref, width, height) {
         constraint.render.anchors = false;
         World.add(engine.world, constraint);
         return constraint
+    }
+
+    function getNode(nodeID) {
+        let node = nodes.get(nodeID)
+        if(!node)
+            return console.error("Could not find node")
+        return node
     }
 
     function runEngineAndRender() {
@@ -328,16 +322,15 @@ function Graph(ref, width, height) {
         World.add(engine.world, mouseConstraint);
     }
 
-    function setStaticNode(nodeId) {
-        const {nodeBody, nodeNeighbours} = getNode(nodeId)
-        if (!nodeBody) return 
-        nodeBody.isStatic = true;
-        //Body.setStatic(nodeBody, true);
+    function setStaticNode(nodeID) {
+        const node = nodes.get(nodeID)
+        if (!node)
+            return console.log("couldnät set static node - no node found with id:", nodeID)
+        node.getBody().isStatic = true;
     }
 
     return {
         setUp,
-        setUpTestBodies,
         addNode,
         getNode,
         addEdge,
@@ -345,7 +338,10 @@ function Graph(ref, width, height) {
         selectNode,
         setStart,
         setFinish,
+        setPath,
         setVisited,
+        setVisitedColor,
+        setInQueueColor,
         setStaticNode,
     }
 }
