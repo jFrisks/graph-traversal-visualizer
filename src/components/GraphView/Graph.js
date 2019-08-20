@@ -1,7 +1,5 @@
 import Matter from 'matter-js'
 import MatterAttractors from 'matter-attractors'
-import countries from '../../data/countries'
-import Algorithms from '../Algorithms'
 
 function Graph(ref, width, height) {
     Matter.use(MatterAttractors);
@@ -72,32 +70,6 @@ function Graph(ref, width, height) {
         World.add(engine.world, walls);
     }
 
-    function setUpTestBodies2() {
-        setUpCountries();
-    }
-
-    async function setUpCountries() {
-        let visited = new Map()
-        let startNodeID = undefined
-        let finishNodeID = undefined
-        let selectedNodeID = undefined
-        //set upp more bodies
-        const euCountries = await countries().getEUCountries()
-        euCountries.forEach(country => {
-            const nodeIDA = country.alpha3Code
-            const multipleNodeID = country.borders
-            addNode(nodeIDA)
-            addMultipleEdges(nodeIDA, multipleNodeID)
-        })
-        // selectNode('AUT', selectedNodeID)
-        // setVisited('SWE', visited)
-        // setVisited('FIN', visited)
-        // setStart('NOR', startNodeID)
-        // setFinish('BLR', finishNodeID)
-        setStaticNode('BLR')
-        setStaticNode('HRV')
-    }
-
     function setUp() {
         /** 
          *  gravity of -5.5 - stable fast, but very powerful beginning movements if starting at same pos. Removed powerful with random startpos
@@ -108,7 +80,6 @@ function Graph(ref, width, height) {
         MatterAttractors.Attractors.gravityConstant = -7.5;
 
         setUpBorders();
-        setUpTestBodies2();
         addMouseConstrain();
         runEngineAndRender()
     }

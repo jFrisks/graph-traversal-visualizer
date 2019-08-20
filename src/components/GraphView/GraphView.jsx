@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 
 import Matter from 'matter-js'
-import Graph from './Graph'
+import Graphs from './Graphs'
 import Algorithms from '../Algorithms'
 
 import countries from '../../data/countries'
@@ -78,13 +78,15 @@ class GraphView extends React.Component{
 
     componentDidMount() {
         //set upp render - after that set up everything else
-        const newGraph = Graph(this.scene, this.props.width, this.props.height)
-        this.setState({
-            Graph: newGraph
-        }, () => {
-            this.state.Graph.setUp()
-        })
-        
+        Graphs(this.scene, this.props.width, this.props.height).WorldGraph()
+            .then(newGraph => {
+                this.setState({Graph: newGraph})
+            })
+        // this.setState({
+        //     Graph: newGraph
+        // }, () => {
+        //     this.state.Graph.setUp()
+        // })
     }
 
     handleSelectChange(event, stateVar) {
