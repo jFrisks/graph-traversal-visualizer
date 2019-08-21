@@ -1,4 +1,4 @@
-import Matter from 'matter-js'
+import Matter from 'matter-js/build/matter'
 import MatterAttractors from 'matter-attractors'
 
 function Graph(ref, width, height) {
@@ -7,6 +7,7 @@ function Graph(ref, width, height) {
     let Engine = Matter.Engine,
         Render = Matter.Render,
         World = Matter.World,
+        Composite = Matter.Composite,
         Bodies = Matter.Bodies,
         Body = Matter.Body,
         Constraint = Matter.Constraint,
@@ -21,7 +22,7 @@ function Graph(ref, width, height) {
         inQueueColor = 'white',
         pathColor = 'green';
 
-    let defaultRadius = 10,
+    let defaultNodeRadius = 10,
         defaultEdgeLength = 50;
 
     let nodes = new Map()
@@ -32,6 +33,8 @@ function Graph(ref, width, height) {
 
     let engine = setUpEngine()
     let render = setUpRender()
+    let graph = Composite.create()
+    let hoveredNode = {label: "undefied"}
 
 
     function setUpEngine() {
@@ -45,7 +48,8 @@ function Graph(ref, width, height) {
             options: {
                 width: width,
                 height: height,
-                wireframes: false
+                wireframes: false,
+                hasZIndex: true,
             }
         })
     }
@@ -68,6 +72,7 @@ function Graph(ref, width, height) {
         const walls = [wallLeft, wallTop, wallRight, wallBottom]
         //Add to world engine
         World.add(engine.world, walls);
+        World.add(engine.world, graph)
     }
 
     function setUp() {
@@ -81,7 +86,6 @@ function Graph(ref, width, height) {
 
         setUpBorders();
         addMouseConstrain();
-        runEngineAndRender()
     }
 
     class Node {
@@ -129,22 +133,25 @@ function Graph(ref, width, height) {
         //addEdge
     }
 
-    function addNode(id, radius = defaultRadius) {
+    function addNode(id, radius = defaultNodeRadius) {
         //error handling
         if(nodes.get(id))
             return
             //return console.log('tried to add new node for already existing nodeID: ', id)
 
         //Create node body
+        let margin = 0.1
         let pos = {
-            x: Math.random() * width,
-            y: Math.random() * height
+            x: (Math.random() * (1-margin*2) + margin) * width,
+            y: (Math.random() * (1-margin*2) + margin) * height
         }
         let options = {
+            label: id,
             render: {
                 fillStyle: defaultColor,
                 strokeStyle: defaultColor,
-                lineWidth: 3
+                lineWidth: 3,
+                zIndex: 500,
             },
             plugin: {
                 attractors: [
@@ -155,7 +162,7 @@ function Graph(ref, width, height) {
         //creating nodeBody
         let nodeBody = Bodies.circle(pos.x, pos.y, radius, options);
         //Add to world engine
-        World.add(engine.world, nodeBody);
+        Composite.add(graph, nodeBody);
         //add empty neighbours
         let neighbours = []
 
@@ -196,7 +203,7 @@ function Graph(ref, width, height) {
         nodeB.addNeighbour(nodeIDA)
     }
 
-    function addMultipleEdges(nodeIDA, multipleNodeID, length = 100) {
+    function addMultipleEdges(nodeIDA, multipleNodeID, length = defaultEdgeLength) {
         multipleNodeID.forEach(nodeIDB => {
             addEdge(nodeIDA, nodeIDB, length)
         })
@@ -223,6 +230,14 @@ function Graph(ref, width, height) {
 
     function setFinish(nodeID, finishNode) {
         changeColor(nodeID, finishNode, finishColor)
+    }
+
+    function setNodeRadius(radius){
+        defaultNodeRadius = radius;
+    }
+
+    function setEdgeLength(length){
+        defaultEdgeLength = length;
     }
 
     function setPath(pathArr){
@@ -268,7 +283,7 @@ function Graph(ref, width, height) {
         let constraint = Constraint.create(optionsObj)
         constraint.render.type = 'line';
         constraint.render.anchors = false;
-        World.add(engine.world, constraint);
+        Composite.add(graph, constraint);
         return constraint
     }
 
@@ -279,7 +294,7 @@ function Graph(ref, width, height) {
         return node
     }
 
-    function runEngineAndRender() {
+    function run() {
         // run the engine
         Engine.run(engine);
         Render.run(render);  
@@ -298,6 +313,34 @@ function Graph(ref, width, height) {
             }
             });
         World.add(engine.world, mouseConstraint);
+
+        addNodeHoverEvent(mouseConstraint)
+    }
+
+    function addNodeHoverEvent(mouseConstraint){
+        //Add event with 'mousemove'
+        Matter.Events.on(mouseConstraint, 'mousemove', (event) => {
+            //For Matter.Query.point pass "array of bodies" and "mouse position"
+            var foundPhysics = Matter.Query.point(Composite.allBodies(graph), event.mouse.position);
+        
+            //Your custom code here
+            let foundNode = foundPhysics[0];
+            if(typeof foundNode !== "undefined"){
+                if(foundNode.label !== hoveredNode.label ){
+                    //TODO - add this.props.handle
+                    onNodeHover(foundNode)
+                    console.log("Hovered: ", foundNode.label); //returns a shape corrisponding to the mouse position
+                }
+                hoveredNode = foundNode;
+            }
+        });
+    }
+
+    function onNodeHover(foundNode){
+        var event = new CustomEvent('onNodeHover', {
+            detail: foundNode
+        });
+        ref.current.dispatchEvent(event);
     }
 
     function setStaticNode(nodeID) {
@@ -309,6 +352,7 @@ function Graph(ref, width, height) {
 
     return {
         setUp,
+        run,
         reset,
         addNode,
         getNode,
@@ -322,6 +366,8 @@ function Graph(ref, width, height) {
         setVisitedColor,
         setInQueueColor,
         setStaticNode,
+        setNodeRadius,
+        setEdgeLength,
     }
 }
 

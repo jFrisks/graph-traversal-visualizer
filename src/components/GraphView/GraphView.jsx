@@ -1,11 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import Matter from 'matter-js'
 import Graphs from './Graphs'
 import Algorithms from '../Algorithms'
-
-import countries from '../../data/countries'
 
 const Wrapper = styled.div`
     position: relative;
@@ -70,10 +67,12 @@ class GraphView extends React.Component{
             algoRunning: false,
             startNode: data[0],
             endNode: data[1],
-            speed: speedSteps[3]
+            speed: speedSteps[3],
+            selectedNode: ""
         }
         this.scene = React.createRef();
         this.handleSelectChange = this.handleSelectChange.bind(this);
+        this.handleNodeHover = this.handleNodeHover.bind(this);
     }
 
     componentDidMount() {
@@ -82,15 +81,19 @@ class GraphView extends React.Component{
             .then(newGraph => {
                 this.setState({Graph: newGraph})
             })
-        // this.setState({
-        //     Graph: newGraph
-        // }, () => {
-        //     this.state.Graph.setUp()
-        // })
+        this.scene.current.addEventListener('onNodeHover', this.handleNodeHover);
     }
 
     handleSelectChange(event, stateVar) {
         this.setState({[stateVar]: event.target.value})
+    }
+
+    handleNodeHover(event) {
+        //Get node id
+        let nodeID = event.detail.label
+        //get full node Name
+        //show it
+        this.setState({selectedNode: nodeID})
     }
 
     handleBFTClick() {
@@ -147,6 +150,9 @@ class GraphView extends React.Component{
                         <Selector data={data} value={this.state.startNode} onChange={(e) => this.handleSelectChange(e, 'startNode')}/>
                         <Selector data={data} value={this.state.endNode} onChange={(e) => this.handleSelectChange(e, 'endNode')}/>
                         <Selector data={speedSteps} value={this.state.speed} onChange={(e) => this.handleSelectChange(e, 'speed')}/>
+                        <Button>
+                            {this.state.selectedNode}
+                        </Button>
                     </Menu>
                 </div>
             </Wrapper>
