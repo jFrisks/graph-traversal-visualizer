@@ -26,7 +26,7 @@ function Graph(ref, width, height) {
         defaultEdgeLength = 50;
 
     var nodes = new Map()
-
+    var inputData = [];
     let engine = setUpEngine()
     let render = setUpRender()
     let graph = Composite.create()
@@ -77,18 +77,25 @@ function Graph(ref, width, height) {
          *  gravity of -2.5 Feels a bit to wiggly. Wiggles a long time
         */
         engine.world.gravity.y = 0;
-        MatterAttractors.Attractors.gravityConstant = -7.5;
+        MatterAttractors.Attractors.gravityConstant = -5.5;
 
         setUpBorders();
         addMouseConstrain();
     }
 
     class Node {
-        constructor(nodeBody, neighbours){
+        constructor(id, nodeBody, neighbours, details = {}){
+            this.id = id;
+            this.details = details;
             this.nodeBody = nodeBody;
             this.neighbours = neighbours;
             this.prevColor = defaultColor;
             this.currentColor = defaultColor;
+        }
+
+        setDetails(details){
+            let oldDetails = this.details;
+            this.details = {...oldDetails, ...details}
         }
 
         setCurrentColor(color) {
@@ -125,14 +132,17 @@ function Graph(ref, width, height) {
             return this.nodeBody;
         }
 
-        //addEdge
     }
 
-    function addNode(id, radius = defaultNodeRadius) {
-        //error handling
-        if(nodes.get(id))
+    function addNode(id, radius = defaultNodeRadius, details = {}) {
+        //error handling - if already created
+        let node = nodes.get(id);
+        if(node) {
+            //add Node information
+            node.setDetails(details)
             return
-            //return console.log('tried to add new node for already existing nodeID: ', id)
+        }
+            
 
         //Create node body
         let margin = 0.1
@@ -161,7 +171,7 @@ function Graph(ref, width, height) {
         //add empty neighbours
         let neighbours = []
 
-        let node = new Node(nodeBody, neighbours)
+        node = new Node(id, nodeBody, neighbours, details)
         nodes.set(id, node)
     }
 
@@ -171,12 +181,17 @@ function Graph(ref, width, height) {
 
         //error case
         if(!nodeA || !nodeB) {
+            let details = {
+                name: "Outside region"
+            }
             if(!nodeA) {
-                addNode(nodeIDA)
+                details.name = nodeIDA + " - " +  details.name
+                addNode(nodeIDA, undefined, details)
                 nodeA = nodes.get(nodeIDA)
             }
             if(!nodeB) {
-                addNode(nodeIDB)
+                details.name = nodeIDB + " - " + details.name
+                addNode(nodeIDB, undefined, details)
                 nodeB = nodes.get(nodeIDB)
             }
         }
@@ -309,6 +324,10 @@ function Graph(ref, width, height) {
         this.setFinish(endNodeID)
     }
 
+    function getAllNodeID(){
+        return [...nodes.keys()]
+    }
+
     function createConstraint(bodyA, bodyB, options) {
         //TODO - looks so theres no already exisitng
         let optionsObj = {bodyA, bodyB, ...options}
@@ -356,21 +375,25 @@ function Graph(ref, width, height) {
             var foundPhysics = Matter.Query.point(Composite.allBodies(graph), event.mouse.position);
         
             //Your custom code here
-            let foundNode = foundPhysics[0];
-            if(typeof foundNode !== "undefined"){
-                if(foundNode.label !== hoveredNode.label ){
+            let foundNodeBody = foundPhysics[0];
+            if(typeof foundNodeBody !== "undefined"){
+                if(foundNodeBody.label !== hoveredNode){
                     //TODO - add this.props.handle
-                    onNodeHover(foundNode)
-                    console.log("Hovered: ", foundNode.label); //returns a shape corrisponding to the mouse position
+                    let nodeID = foundNodeBody.label
+                    onNodeHover(nodeID)
                 }
-                hoveredNode = foundNode;
+                hoveredNode = foundNodeBody.label;
             }
         });
     }
 
-    function onNodeHover(foundNode){
+    function onNodeHover(nodeID){
+        //console.log("onNodeHover for node: ", node)
+        let node = nodes.get(nodeID)
+        if(!node)
+            return
         var event = new CustomEvent('onNodeHover', {
-            detail: foundNode
+            detail: {node}
         });
         ref.current.dispatchEvent(event);
     }
@@ -402,6 +425,7 @@ function Graph(ref, width, height) {
         setNodeRadius,
         setEdgeLength,
         calcSetNodeEdgeSize,
+        getAllNodeID,
     }
 }
 

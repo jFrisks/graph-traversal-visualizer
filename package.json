@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^4.3.3",
     "matter-attractors": "^0.1.6",
     "matter-js": "^0.14.2",
     "react": "^16.9.0",

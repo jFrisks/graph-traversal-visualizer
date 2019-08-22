@@ -3,12 +3,13 @@ import logo from './logo.svg';
 import './App.css';
 
 import GraphView from './components/GraphView/GraphView'
+import SnackbarLayout from './components/SnackbarLayout'
 
 function App() {
   return ( 
-    <div>
+    <SnackbarLayout>
       <GraphView height={window.innerHeight} width={window.innerWidth}/>
-    </div>
+    </SnackbarLayout>
   );
 }
 

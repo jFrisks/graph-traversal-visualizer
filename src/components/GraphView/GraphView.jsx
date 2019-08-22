@@ -5,6 +5,12 @@ import Graphs from './Graphs'
 import Algorithms from '../Algorithms'
 import countries from '../../data/countries'
 
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import { Paper, Snackbar } from '@material-ui/core';
+
 const Wrapper = styled.div`
     position: relative;
 `
@@ -17,7 +23,7 @@ const Menu = styled.div`
     margin-right: auto;
 
     display: flex;
-    width: 50vw;
+    width: 80vw;
     justify-content: center;
 `
 
@@ -43,33 +49,45 @@ const RedButton = styled(Button)`
     border:1px solid rgba(35,35,35,0.72);
 `
 
-function Selector(props) {
-    const { data, value, onChange, ...other } = props;
+function Selector2(props) {
+    const { data, value, onChange, typeName, ...other } = props;
 
-    return (
-        <select value={value} onChange={onChange}>
-            {data.map((option, index) => (
-                <option key={option+index} value={option}>{option}</option>
-            ))}
-        </select>
+    return(
+        <FormControl>
+            <InputLabel htmlFor="age-simple">{typeName}</InputLabel>
+            <Select
+                value={value}
+                onChange={onChange}
+                inputProps={{
+                name: typeName,
+                id: typeName,
+                }}
+            >
+                {data.map((option, index) => (
+                    <MenuItem key={option+index} value={option}>{option}</MenuItem>
+                ))}
+            </Select>
+        </FormControl>
     )
 }
 
-let data = ['SWE', 'BLR', 'TUR', 'DEU']
 let speedSteps = [50, 100, 500, 1000, 2000]
 
 class GraphView extends React.Component{
     
-
     constructor(props) {
         super(props);
         this.state = {
             Graph: undefined,
+            graphNodes: [],
             algoRunning: false,
-            startNode: data[0],
-            endNode: data[1],
+            startNode: "Choose",
+            endNode: "Choose",
             speed: speedSteps[3],
-            selectedNode: ""
+            selectedNode: undefined,
+            hoverQueue: [],
+            hoverOpen: false,
+            hoverMessage: undefined,
         }
         this.scene = React.createRef();
         this.handleSelectChange = this.handleSelectChange.bind(this);
@@ -80,10 +98,58 @@ class GraphView extends React.Component{
         //set upp render - after that set up everything else
         Graphs(this.scene, this.props.width, this.props.height).WorldGraph()
             .then(newGraph => {
-                this.setState({Graph: newGraph})
+                let allNodeID = newGraph.getAllNodeID()
+                this.setState({
+                    Graph: newGraph,
+                    graphNodes: allNodeID,
+                    startNode: allNodeID[0],
+                    endNode: allNodeID[0]
+                })
             })
         this.scene.current.addEventListener('onNodeHover', this.handleNodeHover);
     }
+  
+    setHoverMessage = (hoverMessage) => {
+        this.setState({hoverMessage})
+    }
+
+    setHoverOpen = (hoverOpen) => {
+        this.setState({hoverOpen})
+    }
+    
+    processHoverMessageQueue = () => {
+      if (this.state.hoverQueue.length > 0) {
+        this.setHoverMessage(this.state.hoverQueue.shift());
+        this.setHoverOpen(true);
+      }
+    };
+  
+    sendHoverMessage = message => {
+        this.state.hoverQueue.push({
+            message,
+            key: new Date().getTime(),
+        });
+    
+        if (this.state.hoverOpen) {
+            // immediately begin dismissing current message
+            // to start showing new one
+            this.setHoverOpen(false);
+        } else {
+            this.processHoverMessageQueue();
+        }
+    };
+  
+    handleHoverClose = (event, reason) => {
+      if (reason === 'clickaway') {
+        return;
+      }
+      this.setHoverOpen(false);
+    };
+  
+    handleHoverExited = () => {
+      this.processHoverMessageQueue();
+    };
+
 
     handleSelectChange(event, stateVar) {
         this.setState({[stateVar]: event.target.value})
@@ -91,10 +157,9 @@ class GraphView extends React.Component{
 
     handleNodeHover(event) {
         //Get node id
-        let nodeID = event.detail.label
-        //get full node Name
-        //show it
-        this.setState({selectedNode: nodeID})
+        let node = event.detail.node
+        this.sendHoverMessage(node.details.name)
+        this.setState({selectedNode: node})
     }
 
     handleBFTClick() {
@@ -112,10 +177,29 @@ class GraphView extends React.Component{
         this.runAlgo(algo)
     }
 
-    async handleGraphChange() {
-        let data = await countries().getEUCountries()
+    async handleGraphChange(region) {
+        let data;
+        switch(region){
+            case 'eu':
+                data = await countries().getEUCountries()
+                break;
+            case 'world':
+                data = await countries().getWorldCountries()
+                break;
+            case 'africa':
+                data = await countries().getAfricaCountries()
+                break;
+            default:
+                data = await countries().getWorldCountries()
+        }
         let addCountriesToDataFunc = Graphs(this.scene, this.props.width, this.props.height).addCountriesToGraph
         this.state.Graph.setNewGraphData(data, addCountriesToDataFunc, this.state.startNode, this.state.endNode)
+        let allNodeID = this.state.Graph.getAllNodeID()
+        this.setState(prev => ({
+            graphNodes: allNodeID,
+            startNode: prev.startNode,
+            endNode: prev.endNode
+        }))
     }
 
     handleReset() {
@@ -154,13 +238,37 @@ class GraphView extends React.Component{
                         <RedButton onClick={() => this.handleReset()}>
                             Reset
                         </RedButton>
-                        <Selector data={data} value={this.state.startNode} onChange={(e) => this.handleSelectChange(e, 'startNode')}/>
-                        <Selector data={data} value={this.state.endNode} onChange={(e) => this.handleSelectChange(e, 'endNode')}/>
-                        <Selector data={speedSteps} value={this.state.speed} onChange={(e) => this.handleSelectChange(e, 'speed')}/>
-                        <Button onClick={() => this.handleGraphChange()}>
-                            Change to EU Graph
+                        <Paper>
+                            <Selector2 data={this.state.graphNodes} typeName="Start Node" value={this.state.startNode} onChange={(e) => this.handleSelectChange(e, 'startNode')}/>
+                            <Selector2 data={this.state.graphNodes} typeName="End Node" value={this.state.endNode} onChange={(e) => this.handleSelectChange(e, 'endNode')}/>
+                            <Selector2 data={speedSteps} typeName="Algo Speed" value={this.state.speed} onChange={(e) => this.handleSelectChange(e, 'speed')}/>
+                        </Paper>
+                        
+                        <Button onClick={() => this.handleGraphChange('eu')}>
+                            EU Graph
+                        </Button>
+                        <Button onClick={() => this.handleGraphChange('world')}>
+                            World Graph
+                        </Button>
+                        <Button onClick={() => this.handleGraphChange('africa')}>
+                            Africa Graph
                         </Button>
                     </Menu>
+                    <Snackbar
+                        key={this.state.hoverMessage ? this.state.hoverMessage.key : undefined}
+                        anchorOrigin={{
+                            vertical: 'top',
+                            horizontal: 'left',
+                        }}
+                        open={this.state.hoverOpen}
+                        autoHideDuration={2000}
+                        onClose={this.handleHoverClose}
+                        onExited={this.handleHoverExited}
+                        ContentProps={{
+                            'aria-describedby': 'message-id',
+                        }}
+                        message={<span id="message-id">{this.state.hoverMessage ? this.state.hoverMessage.message : undefined}</span>}
+                    />
                 </div>
             </Wrapper>
         )

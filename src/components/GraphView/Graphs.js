@@ -29,11 +29,13 @@ function Graphs(bodyRef, width, height) {
     async function addCountriesToGraph(countries, Graph){
         console.log("Adding countries to graph ", Graph)
         Graph.calcSetNodeEdgeSize(countries.length)
-        console.log("calculated and set node edge size")
         await countries.forEach(country => {
             const nodeIDA = country.alpha3Code
             const multipleNodeID = country.borders
-            Graph.addNode(nodeIDA)
+            const details = {
+                name: country.name
+            }
+            Graph.addNode(nodeIDA, undefined, details)
             Graph.addMultipleEdges(nodeIDA, multipleNodeID)
         })
     }
