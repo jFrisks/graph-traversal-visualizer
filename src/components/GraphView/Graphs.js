@@ -26,43 +26,22 @@ function Graphs(bodyRef, width, height) {
         return newGraph;
     }
 
-    async function addCountriesToGraph(countries, newGraph){
-        let boxHeight = calcBoxSize(countries.length)
-        let edgeToNodeSize = 4;
-        let nodeLength = Math.ceil(boxHeight / (edgeToNodeSize + 1))
-        let edgeLength = Math.ceil(nodeLength * edgeToNodeSize)
-        console.log("Nodelength: ", nodeLength)
-        console.log("edgeLength: ", edgeLength)
-
-        newGraph.setNodeRadius(nodeLength / 2)
-        newGraph.setEdgeLength(edgeLength)
-
+    async function addCountriesToGraph(countries, Graph){
+        console.log("Adding countries to graph ", Graph)
+        Graph.calcSetNodeEdgeSize(countries.length)
+        console.log("calculated and set node edge size")
         await countries.forEach(country => {
             const nodeIDA = country.alpha3Code
             const multipleNodeID = country.borders
-            newGraph.addNode(nodeIDA)
-            newGraph.addMultipleEdges(nodeIDA, multipleNodeID)
+            Graph.addNode(nodeIDA)
+            Graph.addMultipleEdges(nodeIDA, multipleNodeID)
         })
-    }
-
-    function calcBoxSize(dataSize) {
-        var ratio = Math.ceil(width / height)
-        var found = false
-        var heightInBoxes = 1
-        while(!found){
-            // width * height
-            let boxes = (heightInBoxes * ratio) * heightInBoxes
-            if(boxes >= dataSize)
-                found = true
-            heightInBoxes += 1
-
-        }
-        return Math.ceil(height / heightInBoxes);
     }
 
     return {
         EUGraph,
         WorldGraph,
+        addCountriesToGraph,
     }
 }
 

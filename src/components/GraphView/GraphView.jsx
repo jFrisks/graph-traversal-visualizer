@@ -3,6 +3,7 @@ import styled from 'styled-components'
 
 import Graphs from './Graphs'
 import Algorithms from '../Algorithms'
+import countries from '../../data/countries'
 
 const Wrapper = styled.div`
     position: relative;
@@ -111,6 +112,12 @@ class GraphView extends React.Component{
         this.runAlgo(algo)
     }
 
+    async handleGraphChange() {
+        let data = await countries().getEUCountries()
+        let addCountriesToDataFunc = Graphs(this.scene, this.props.width, this.props.height).addCountriesToGraph
+        this.state.Graph.setNewGraphData(data, addCountriesToDataFunc, this.state.startNode, this.state.endNode)
+    }
+
     handleReset() {
         const resetFunc = () => new Promise(res => {
             console.log("resetting colors")
@@ -150,8 +157,8 @@ class GraphView extends React.Component{
                         <Selector data={data} value={this.state.startNode} onChange={(e) => this.handleSelectChange(e, 'startNode')}/>
                         <Selector data={data} value={this.state.endNode} onChange={(e) => this.handleSelectChange(e, 'endNode')}/>
                         <Selector data={speedSteps} value={this.state.speed} onChange={(e) => this.handleSelectChange(e, 'speed')}/>
-                        <Button>
-                            {this.state.selectedNode}
+                        <Button onClick={() => this.handleGraphChange()}>
+                            Change to EU Graph
                         </Button>
                     </Menu>
                 </div>

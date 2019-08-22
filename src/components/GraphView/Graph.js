@@ -25,17 +25,12 @@ function Graph(ref, width, height) {
     let defaultNodeRadius = 10,
         defaultEdgeLength = 50;
 
-    let nodes = new Map()
-    //edges: id -> [nodeIDA, nodeIDB]
-    let edges = new Map()
-    //edgesBodies: id -> constraint
-    let edgesBodies = new Map()
+    var nodes = new Map()
 
     let engine = setUpEngine()
     let render = setUpRender()
     let graph = Composite.create()
     let hoveredNode = {label: "undefied"}
-
 
     function setUpEngine() {
         return Engine.create()
@@ -191,12 +186,8 @@ function Graph(ref, width, height) {
             damping: 0.1,
             stiffness: 0.01
         }
-        //Put edge object in array for body and neighbours
-        let constraint = createConstraint(nodeA.getBody(), nodeB.getBody(), constrainOptions)
-        //TODO - add sorting for this
-        let edgeID = nodeIDA+nodeIDB;
-        edgesBodies.set(edgeID, constraint)
-        edges.set(edgeID, [nodeIDA, nodeIDB])
+        //Put edge object in array for body and neighbours, added to graph composite
+        createConstraint(nodeA.getBody(), nodeB.getBody(), constrainOptions)
 
         //setting neighbours for nodes
         nodeA.addNeighbour(nodeIDB)
@@ -275,6 +266,47 @@ function Graph(ref, width, height) {
 
     function setVisitedColor(node) {
         node.setCurrentColor(visitedColor)
+    }
+
+    function calcSetNodeEdgeSize(dataLength){
+        let boxHeight = calcBoxSize(dataLength)
+        let edgeToNodeSize = 4;
+        let nodeLength = Math.ceil(boxHeight / (edgeToNodeSize + 1))
+        let edgeLength = Math.ceil(nodeLength * edgeToNodeSize)
+        console.log("Nodelength: ", nodeLength)
+        console.log("edgeLength: ", edgeLength)
+
+        console.log("Calculated node size")
+        this.setNodeRadius(nodeLength / 2)
+        this.setEdgeLength(edgeLength)
+        console.log("set sizes for datalength ", dataLength)
+    }
+
+    function calcBoxSize(dataSize) {
+        var ratio = Math.ceil(width / height)
+        var found = false
+        var heightInBoxes = 1
+        while(!found){
+            // width * height
+            let boxes = (heightInBoxes * ratio) * heightInBoxes
+            if(boxes >= dataSize)
+                found = true
+            heightInBoxes += 1
+
+        }
+        return Math.ceil(height / heightInBoxes);
+    }
+
+    async function setNewGraphData(newData, addDataToGraph, startNodeID, endNodeID){
+        console.log("clearing all nodes")
+        //Clear old stuff - could be added to history in future
+        Composite.clear(graph, false)
+        nodes.clear()
+
+        //add new stuff
+        await addDataToGraph(newData, this)
+        this.setStart(startNodeID)
+        this.setFinish(endNodeID)
     }
 
     function createConstraint(bodyA, bodyB, options) {
@@ -362,12 +394,14 @@ function Graph(ref, width, height) {
         setStart,
         setFinish,
         setPath,
+        setNewGraphData,
         setVisited,
         setVisitedColor,
         setInQueueColor,
         setStaticNode,
         setNodeRadius,
         setEdgeLength,
+        calcSetNodeEdgeSize,
     }
 }
 
