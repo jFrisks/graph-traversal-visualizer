@@ -23,10 +23,11 @@ function Graph(ref, width, height) {
         pathColor = 'green';
 
     let defaultNodeRadius = 10,
-        defaultEdgeLength = 50;
+        defaultEdgeLength = 50,
+        stiffness = 0.005,
+        damping = 0.1;
 
     var nodes = new Map()
-    var inputData = [];
     let engine = setUpEngine()
     let render = setUpRender()
     let graph = Composite.create()
@@ -44,7 +45,7 @@ function Graph(ref, width, height) {
                 width: width,
                 height: height,
                 wireframes: false,
-                hasZIndex: true,
+                hasZIndex: false,
             }
         })
     }
@@ -77,7 +78,9 @@ function Graph(ref, width, height) {
          *  gravity of -2.5 Feels a bit to wiggly. Wiggles a long time
         */
         engine.world.gravity.y = 0;
-        MatterAttractors.Attractors.gravityConstant = -5.5;
+        MatterAttractors.Attractors.gravityConstant = -7.5;
+        stiffness = 0.005
+        damping = 0.1
 
         setUpBorders();
         addMouseConstrain();
@@ -198,8 +201,8 @@ function Graph(ref, width, height) {
         //Add constraint and put in world
         let constrainOptions = {
             length: length,
-            damping: 0.1,
-            stiffness: 0.01
+            damping: damping,
+            stiffness: stiffness
         }
         //Put edge object in array for body and neighbours, added to graph composite
         createConstraint(nodeA.getBody(), nodeB.getBody(), constrainOptions)

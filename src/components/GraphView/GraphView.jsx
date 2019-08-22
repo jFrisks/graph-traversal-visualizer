@@ -23,7 +23,8 @@ const Menu = styled.div`
     margin-right: auto;
 
     display: flex;
-    width: 80vw;
+    flex-wrap: wrap;
+    width: 93vw;
     justify-content: center;
 `
 
@@ -152,6 +153,10 @@ class GraphView extends React.Component{
 
 
     handleSelectChange(event, stateVar) {
+        //TODO -Set new nodecolors
+        // this.state.Graph.setStart()
+        // this.state.Graph.setFinish()
+
         this.setState({[stateVar]: event.target.value})
     }
 
@@ -178,6 +183,8 @@ class GraphView extends React.Component{
     }
 
     async handleGraphChange(region) {
+        if(this.state.algoRunning)
+            return this.sendHoverMessage('You can only change graph when algo is not running')
         let data;
         switch(region){
             case 'eu':
@@ -213,7 +220,7 @@ class GraphView extends React.Component{
 
     async runAlgo(algo) {
         if(this.state.algoRunning)
-            return console.log("algo already running")
+            return this.sendHoverMessage('SLOW DOWN - Algo already running')
 
         this.setState({algoRunning: true})
         await algo()
