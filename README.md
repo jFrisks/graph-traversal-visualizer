@@ -1,4 +1,5 @@
 [Trello Board](https://trello.com/invite/b/nTdCSzca/2ed317b06b6af6adfd57a4de4342c337/graph-traversal-visualizer)
+[![DEMO](https://cdn.iconscout.com/icon/premium/png-256-thumb/demo-4-890074.png)](https://jfrisks.github.io/graph-traversal-visualizer/)
 **AUTHOR**: Jonathan Frisk
 
 # Features
