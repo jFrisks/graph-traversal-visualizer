@@ -5,7 +5,7 @@
 # Features
 - Floating Physics visualization of graph containing nodes and edges
 - Drag and drop nodes
-- Graph algorithm vizualisation (BFS, BFS Shortest Path, DFS)
+- Graph algorithm visualization (BFS, BFS Shortest Path, DFS)
 - Choose algorithm running speed in view.
 - Add your own Graph data (Graphs for countries and borders included)
 - Hover to see node details such as name, id, or other.
