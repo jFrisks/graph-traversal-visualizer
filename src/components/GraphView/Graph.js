@@ -259,7 +259,7 @@ function Graph(ref, width, height) {
     function changeColor(nodeID, valToModify, color) {
         const node = nodes.get(nodeID)
         if(!node)
-            return console.error("Couldn't change Color - No nodeID found")
+            return console.error("Tried to change Color on non existing NodeID")
 
         //set selected variable to node and get the prev
         const prevSelectedID = valToModify;
@@ -270,9 +270,8 @@ function Graph(ref, width, height) {
 
         //Change back color of prev selected node
         const prevNode = nodes.get(prevSelectedID)
-        if(!prevNode)
-            return console.error("Couldn't change Color - No nodeID found")
-        prevNode.setToOldColor()
+        if(prevNode)
+            prevNode.setToOldColor()        
     }
 
     function setInQueueColor(nodeID) {

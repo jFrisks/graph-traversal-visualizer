@@ -10,6 +10,7 @@ import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import { Paper, Snackbar } from '@material-ui/core';
+import OnboardingDialog from '../Onboarding'
 
 const Wrapper = styled.div`
     position: relative;
@@ -48,6 +49,12 @@ const RedButton = styled(Button)`
     background-color:#EA3C3C;
     text-shadow:0px 1px 0px rgba(35,35,35,0.72);
     border:1px solid rgba(35,35,35,0.72);
+`
+
+const RepoLink = styled(Button)`
+    background-color:#EDAF55;
+    text-shadow:0px 1px 0px rgba(237,175,85,0.72);
+    border:1px solid rgba(237,175,85,0.72);
 `
 
 function Selector2(props) {
@@ -108,6 +115,9 @@ class GraphView extends React.Component{
                 })
             })
         this.scene.current.addEventListener('onNodeHover', this.handleNodeHover);
+
+        //TODO - Welcom message onboarding
+
     }
   
     setHoverMessage = (hoverMessage) => {
@@ -181,7 +191,6 @@ class GraphView extends React.Component{
         const algo = () => Algorithms(this.state.Graph, this.state.speed).dfs(this.state.startNode)
         this.runAlgo(algo)
     }
-
     async handleGraphChange(region) {
         if(this.state.algoRunning)
             return this.sendHoverMessage('You can only change graph when algo is not running')
@@ -200,7 +209,11 @@ class GraphView extends React.Component{
                 data = await countries().getWorldCountries()
         }
         let addCountriesToDataFunc = Graphs(this.scene, this.props.width, this.props.height).addCountriesToGraph
-        this.state.Graph.setNewGraphData(data, addCountriesToDataFunc, this.state.startNode, this.state.endNode)
+        let startNode = data.find( x => this.state.startNode === x.alpha3Code)
+        let endNode = data.find( x => this.state.endNode === x.alpha3Code)
+        if(!startNode) this.setState({startNode: data[0].alpha3Code})
+        if(!endNode) this.setState({endNode: data[0].alpha3Code})
+        this.state.Graph.setNewGraphData(data, addCountriesToDataFunc, startNode, endNode)
         let allNodeID = this.state.Graph.getAllNodeID()
         this.setState(prev => ({
             graphNodes: allNodeID,
@@ -224,11 +237,16 @@ class GraphView extends React.Component{
 
         this.setState({algoRunning: true})
         await algo()
+        this.sendHoverMessage('Algo Finished! - Path is indicated with green nodes')
         this.setState({algoRunning: false})
     }
 
     
     render() {
+        const openRepoLink = () => {
+            window.open('https://github.com/jFrisks/graph-traversal-visualizer', '_blank');
+        }
+
         return (
             <Wrapper>
                 <div className="graphView" ref={this.scene}>
@@ -260,6 +278,7 @@ class GraphView extends React.Component{
                         <Button onClick={() => this.handleGraphChange('africa')}>
                             Africa Graph
                         </Button>
+                        <RepoLink onClick={() => openRepoLink()}>CODE REPO</RepoLink>
                     </Menu>
                     <Snackbar
                         key={this.state.hoverMessage ? this.state.hoverMessage.key : undefined}
@@ -276,6 +295,7 @@ class GraphView extends React.Component{
                         }}
                         message={<span id="message-id">{this.state.hoverMessage ? this.state.hoverMessage.message : undefined}</span>}
                     />
+                    <OnboardingDialog />
                 </div>
             </Wrapper>
         )
